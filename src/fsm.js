@@ -11,8 +11,7 @@ class FSM {
         this.state = config['initial'];
         this.history = [this.state];
         this.initial = true;
-        // this.transition = config['states'][this.state]['transitions'];
-        // this.event = config['states'][this.state][this.transition];
+        this.position = 0;
     }
 
     /**
@@ -28,12 +27,12 @@ class FSM {
      * @param state
      */
     changeState(state) {
-        // console.log('111111', this.config['states'][state]);
         if (!this.config['states'][state]) {
             throw new Error;
         }
         this.state = state;
         this.history.push(this.state);
+        this.position = this.history.length - 1;
         this.initial = false;
         return this.state;
     }
@@ -48,9 +47,8 @@ class FSM {
         }
         this.state = this.config['states'][this.state]['transitions'][event];
         this.history.push(this.state);
+        this.position = this.history.length - 1;
         this.initial = false;
-        // console.log('111', this.history);
-        // console.log('2222', this.transition);
     }
 
     /**
@@ -58,7 +56,7 @@ class FSM {
      */
     reset() {
         this.state = this.config['initial'];
-        this.initial = true;
+        this.operationCount = 0;
     }
 
     /**
@@ -69,14 +67,16 @@ class FSM {
      */
     getStates(event) {
         if (!event) {
-            // console.log(Object.keys(this.config['states']));
             return Object.keys(this.config['states']);
         }
-        if (this.config['states'][this.state]['transitions'][event] === undefined) {
-            return [];
-        }
 
-        return this.config['states'];
+        let states = [];
+        for (let key in this.config['states']) {
+            if (this.config['states'][key]['transitions'].hasOwnProperty(event)) {
+                states.push(key);
+            }
+        }
+        return states;
     }
 
     /**
@@ -85,19 +85,20 @@ class FSM {
      * @returns {Boolean}
      */
 
-     ///// THINK!!!
     undo() {
 
         if (this.initial) {
             return false;
         }
-        // if ( this.history[this.history.length - 2] === undefined) {
-        //     return false;
-        // }
-        // this.state = this.history[this.history.length - 2];
-        // console.log('111', this.state );
-        //  console.log('22', this.history);
-        // return true;
+        if (this.position) {
+            this.position = this.history.length - 2;
+            this.state = this.history[this.position];
+
+            return true;
+        } else {
+            return false;
+        }
+
 
 
     }
@@ -108,14 +109,17 @@ class FSM {
      * @returns {Boolean}
      */
     redo() {
+
         if (this.initial) {
             return false;
         }
-        // console.log('22', this.history);
-        // this.state = this.history[this.history.length - 1];
-        // console.log('111', this.state );
-        // console.log('22', this.history);
-        // return true;
+        if (this.position < this.history.length - 1) {
+            this.position++;
+            this.state = this.history[this.position];
+            return true;
+        } else {
+            return false;
+        }
 
     }
 
@@ -124,7 +128,8 @@ class FSM {
      */
     clearHistory() {
         this.history = [];
-        // console.log('111', this.history.length);
+        this.initial = true;
+
     }
 }
 
